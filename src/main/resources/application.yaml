@@ -1,0 +1,24 @@
+mqtt:
+  host: broker.hivemq.com
+  port: 1883
+  topic: monpfe2026/energie/puissance
+
+spring:
+  application:
+    name: ConsumptionAgent
+  datasource:
+    driver-class-name: org.sqlite.JDBC
+    url: jdbc:sqlite:consumption.db?date_class=TEXT
+  jpa:
+    database-platform: org.hibernate.community.dialect.SQLiteDialect
+    hibernate:
+      ddl-auto: update
+  ai:
+    azure:
+      openai:
+        chat:
+          options:
+            temperature: '0.3'
+            deployment-name: gpt-4o
+        endpoint: ${AZURE_OPENAI_ENDPOINT}
+        api-key: ${AZURE_OPENAI_API_KEY}
