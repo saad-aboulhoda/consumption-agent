@@ -34,7 +34,3 @@ build/
 
 ### Runtime ###
 consumption.db
-
-### Claude Code ###
-CLAUDE.md
-.claude/
