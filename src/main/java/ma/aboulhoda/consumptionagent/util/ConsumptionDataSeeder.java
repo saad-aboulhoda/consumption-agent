@@ -16,13 +16,13 @@ import java.util.Random;
 public class ConsumptionDataSeeder implements CommandLineRunner {
 
     private static final String DEVICE_ID = "esp32-01";
-    private static final int DAYS = 7;                  // how much history to generate
-    private static final int INTERVAL_MINUTES = 5;      // sampling step (1 = finer, slower)
-    private static final double MAINS_VOLTAGE = 230.0;  // Morocco mains voltage (V)
-    private static final double MAX_WATTS = 3000.0;     // power that maps to ADC = 4095
+    private static final int DAYS = 7;
+    private static final int INTERVAL_MINUTES = 5;
+    private static final double MAINS_VOLTAGE = 230.0;
+    private static final double MAX_WATTS = 3000.0;
 
     private final ConsumptionRepo repository;
-    private final Random random = new Random(42);       // fixed seed = reproducible demo data
+    private final Random random = new Random(42);
 
     public ConsumptionDataSeeder(ConsumptionRepo repository) {
         this.repository = repository;
@@ -32,7 +32,7 @@ public class ConsumptionDataSeeder implements CommandLineRunner {
     @Transactional
     public void run(String... args) {
         if (repository.count() > 0) {
-            return; // already seeded
+            return;
         }
 
         LocalDateTime now = LocalDateTime.now().truncatedTo(ChronoUnit.MINUTES);
@@ -46,11 +46,11 @@ public class ConsumptionDataSeeder implements CommandLineRunner {
             Consumption r = new Consumption();
             r.setDeviceId(DEVICE_ID);
             r.setTimestamp(cursor);
-            r.setRawAdc((int) Math.round(watts / MAX_WATTS * 4095));     // mirrors the 12-bit ADC
+            r.setRawAdc((int) Math.round(watts / MAX_WATTS * 4095));
             r.setPowerWatts(round(watts, 1));
             r.setVoltage(round(MAINS_VOLTAGE + random.nextGaussian() * 2, 1));
-            r.setCurrent(round(watts / MAINS_VOLTAGE, 3));               // I = P / V
-            r.setEnergyWh(round(watts * intervalHours, 3));             // energy for this interval
+            r.setCurrent(round(watts / MAINS_VOLTAGE, 3));
+            r.setEnergyWh(round(watts * intervalHours, 3));
 
             batch.add(r);
             cursor = cursor.plusMinutes(INTERVAL_MINUTES);
@@ -61,34 +61,27 @@ public class ConsumptionDataSeeder implements CommandLineRunner {
                 batch.size(), DAYS);
     }
 
-    /**
-     * A believable household load curve (in watts) for a given moment:
-     * low at night, peaks in the morning and evening, with natural noise and
-     * the occasional abnormal spike so anomaly detection has something to catch.
-     */
     private double simulatePower(LocalDateTime t) {
         int hour = t.getHour();
         double base;
-        if (hour < 6)        base = 150;    // night: fridge + standby
-        else if (hour < 9)   base = 900;    // morning peak (kettle, getting ready)
-        else if (hour < 12)  base = 450;    // late morning
-        else if (hour < 14)  base = 700;    // lunch
-        else if (hour < 18)  base = 400;    // afternoon
-        else if (hour < 22)  base = 1300;   // evening peak (cooking, lights, TV)
-        else                 base = 250;    // wind-down
+        if (hour < 6)        base = 150;
+        else if (hour < 9)   base = 900;
+        else if (hour < 12)  base = 450;
+        else if (hour < 14)  base = 700;
+        else if (hour < 18)  base = 400;
+        else if (hour < 22)  base = 1300;
+        else                 base = 250;
 
-        // weekends run a bit heavier during the day
         switch (t.getDayOfWeek()) {
             case SATURDAY, SUNDAY -> { if (hour >= 9 && hour < 18) base *= 1.3; }
             default -> { }
         }
 
-        double noise = random.nextGaussian() * 60;     // natural fluctuation
+        double noise = random.nextGaussian() * 60;
         double value = Math.max(50, base + noise);
 
-        // ~1.5% chance of an abnormal spike (a heavy appliance kicking in)
         if (random.nextDouble() < 0.015) {
-            value += 1200 + random.nextDouble() * 800;  // +1200..2000 W
+            value += 1200 + random.nextDouble() * 800;
         }
 
         return Math.min(value, MAX_WATTS);

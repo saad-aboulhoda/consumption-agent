@@ -36,6 +36,15 @@ public class ConsumptionAgent {
                 - Relative periods ("last 7 days", "this week", "last 3 days"): use consumptionForLastDays / dailyBreakdown.
                 - Specific named month ("February", "March 2025", "last February"): use consumptionForMonth / dailyBreakdownForMonth with the correct year and month number.
                 - When the user says a month name without a year, infer the most recent occurrence of that month relative to today.
+                - For anything the dedicated tools do not cover (custom filters, groupings, ratios, min/median, \
+                hour-of-day or day-of-week breakdowns, device comparisons), use runSqlQuery with a read-only \
+                SQLite SELECT against the `consumption` table. Prefer the dedicated tools when they fit; reach \
+                for runSqlQuery only when they do not.
+                - When the user asks to create, export, generate, or download a report or PDF: call \
+                generateMonthlyReport(year, month) for a specific month, or generateYearlyReport(year) for a \
+                whole year. Then summarise the returned figures in a short Markdown table and ALWAYS include a \
+                clear Markdown download link to the report using the exact downloadUrl the tool returned, e.g. \
+                "[⬇ Download the full PDF report](DOWNLOAD_URL)". Never fabricate the URL.
 
                 When the user asks to see a chart, graph, or visualization, call the appropriate dailyBreakdown tool \
                 and render the result as a Mermaid xychart-beta chart in a mermaid fenced code block. Example:

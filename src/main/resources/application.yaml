@@ -3,6 +3,15 @@ mqtt:
   port: 1883
   topic: monpfe2026/energie/puissance
 
+consumption:
+  sql-query:
+    max-rows: 500
+    query-timeout-seconds: 5
+    forbidden-keywords: insert|update|delete|drop|alter|create|truncate|attach|detach|pragma|vacuum|reindex|grant|revoke
+  report:
+    output-dir: reports
+    public-base-path: /api/consumption/report
+
 spring:
   application:
     name: ConsumptionAgent
